@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-py_binary(
+load("@subpar//:subpar.bzl", "par_binary")
+
+par_binary(
     name = "gcal",
     srcs = ["gcal.py"],
     python_version = "PY3",
