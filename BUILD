@@ -12,18 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//devtools/python/blaze:pytype.bzl", "pytype_strict_library")
-
 py_binary(
     name = "gcal",
     srcs = ["gcal.py"],
     python_version = "PY3",
     visibility = ["//visibility:public"],
     deps = [],
-)
-
-pytype_strict_library(
-    name = "__init__",
-    srcs = ["__init__.py"],
-    srcs_version = "PY3",
 )
