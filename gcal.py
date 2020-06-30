@@ -42,7 +42,7 @@ def main(argv):
   if FLAGS.default_calendar:
     with open(DEFAULT_CALENDAR_FILE, 'wb') as f:
       pickle.dump(FLAGS.default_calendar, f)
-    logging.info('Default calendar set to %s', FLAGS.default_calendar)
+    print('Default calendar set to %s' % FLAGS.default_calendar)
     sys.exit()
 
   if FLAGS.reset_credentials:
@@ -53,9 +53,8 @@ def main(argv):
 
   calendar_id = None
   if not os.path.exists(DEFAULT_CALENDAR_FILE):
-    logging.info(
+    logging.fatal(
         'Default calendar not set.  Use --default_calendar to specify.')
-    sys.exit(-1)
   else:
     with open(DEFAULT_CALENDAR_FILE, 'rb') as f:
       calendar_id = pickle.load(f)
@@ -73,8 +72,8 @@ def main(argv):
           'https://www.googleapis.com/auth/calendar.events',
           'https://www.googleapis.com/auth/calendar'
       ])
-
       creds = flow.run_local_server(port=33045)
+
     with open(TOKEN_FILE, 'wb') as f:
       pickle.dump(creds, f)
 
@@ -83,9 +82,9 @@ def main(argv):
       calendarId=calendar_id, text=' '.join(sys.argv[1:])).execute()
 
   if created_event['status'] != 'confirmed':
-    logging.info('Error creating event: %s', created_event['status'])
+    logging.fatal('Could not create event: %s' % created_event['status'])
   else:
-    logging.info('Event successfuly created %s', created_event['htmlLink'])
+    print('Event successfuly created %s' % created_event['htmlLink'])
 
 
 if __name__ == '__main__':
