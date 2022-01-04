@@ -26,38 +26,33 @@ from absl import logging
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('default_calendar', None, 'Set default calendar.')
-flags.DEFINE_bool('reset_credentials', False, 'Reset credentials.')
-
 CONFIG_DIR = os.path.join(os.getenv('HOME'), '.gcal')
 TOKEN_FILE = os.path.join(CONFIG_DIR, 'token.pickle')
 CREDENTIALS_FILE = os.path.join(CONFIG_DIR, 'credentials.json')
-DEFAULT_CALENDAR_FILE = os.path.join(CONFIG_DIR, 'default_calendar.pickle')
+CALENDAR_ID_FILE = os.path.join(CONFIG_DIR, 'default_calendar.pickle')
 
 
 def main(argv):
-  if not os.path.exists(CONFIG_DIR):
-    os.mkdir(CONFIG_DIR)
-
-  if FLAGS.default_calendar:
-    with open(DEFAULT_CALENDAR_FILE, 'wb') as f:
-      pickle.dump(FLAGS.default_calendar, f)
-    print('Default calendar set to %s' % FLAGS.default_calendar)
+  if len(argv) < 2:
+    print('Missing required calendar event description.')
     sys.exit()
 
-  if FLAGS.reset_credentials:
-    logging.info('Resetting credentials.')
-    for f in (TOKEN_FILE, CREDENTIALS_FILE):
-      if os.path.exists(f):
-        os.remove(f)
+  if not os.path.exists(CONFIG_DIR):
+    os.mkdir(CONFIG_DIR)
+    logging.info('Created config directory %s' % CONFIG_DIR)
+
+  if not os.path.exists(CALENDAR_ID_FILE):
+    user_calendar_id = input('Default calendar ID: ')
+
+    with open(CALENDAR_ID_FILE, 'wb') as f:
+      pickle.dump(user_calendar_id, f)
+
+    logging.info('Calendar ID %s written to %s' %
+                 (user_calendar_id, CALENDAR_ID_FILE))
 
   calendar_id = None
-  if not os.path.exists(DEFAULT_CALENDAR_FILE):
-    logging.fatal(
-        'Default calendar not set.  Use --default_calendar to specify.')
-  else:
-    with open(DEFAULT_CALENDAR_FILE, 'rb') as f:
-      calendar_id = pickle.load(f)
+  with open(CALENDAR_ID_FILE, 'rb') as f:
+    calendar_id = pickle.load(f)
 
   creds = None
   if os.path.exists(TOKEN_FILE):
