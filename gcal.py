@@ -12,47 +12,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function
 import pickle
 import sys
 import os
+
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+
+from collections.abc import Sequence
 
 from absl import app
 from absl import flags
 from absl import logging
 
-FLAGS = flags.FLAGS
-
-CONFIG_DIR = os.path.join(os.getenv('HOME'), '.gcal')
+CONFIG_DIR = os.path.join(os.getenv('HOME'), '.config', 'gcal')
 TOKEN_FILE = os.path.join(CONFIG_DIR, 'token.pickle')
 CREDENTIALS_FILE = os.path.join(CONFIG_DIR, 'credentials.json')
 CALENDAR_ID_FILE = os.path.join(CONFIG_DIR, 'default_calendar.pickle')
 
 
-def main(argv):
-  if len(argv) < 2:
-    print('Missing required calendar event description.')
-    sys.exit()
-
+def main(argv: Sequence[str]) -> None:
   if not os.path.exists(CONFIG_DIR):
     os.mkdir(CONFIG_DIR)
     logging.info('Created config directory %s' % CONFIG_DIR)
 
-  if not os.path.exists(CALENDAR_ID_FILE):
-    user_calendar_id = input('Default calendar ID: ')
+  if os.path.exists(CALENDAR_ID_FILE):
+    with open(CALENDAR_ID_FILE, 'rb') as f:
+      calendar_id = pickle.load(f)
+  else:
+    calendar_id = input('Default calendar ID: ')
 
     with open(CALENDAR_ID_FILE, 'wb') as f:
-      pickle.dump(user_calendar_id, f)
+      pickle.dump(calendar_id, f)
 
     logging.info('Calendar ID %s written to %s' %
-                 (user_calendar_id, CALENDAR_ID_FILE))
+                 (calendar_id, CALENDAR_ID_FILE))
 
-  calendar_id = None
-  with open(CALENDAR_ID_FILE, 'rb') as f:
-    calendar_id = pickle.load(f)
+  if not os.path.exists(CREDENTIALS_FILE):
+    logging.fatal(
+        'No credentials found.  Download credentials from '
+        'https://console.cloud.google.com/apis/credentials and save to %s.' %
+        CREDENTIALS_FILE)
 
   creds = None
   if os.path.exists(TOKEN_FILE):
@@ -72,9 +73,14 @@ def main(argv):
     with open(TOKEN_FILE, 'wb') as f:
       pickle.dump(creds, f)
 
+  if len(argv) < 2:
+    print('Missing required calendar event description.')
+    sys.exit()
+
   service = build('calendar', 'v3', credentials=creds, cache_discovery=False)
-  created_event = service.events().quickAdd(
-      calendarId=calendar_id, text=' '.join(sys.argv[1:])).execute()
+  created_event = service.events().quickAdd(calendarId=calendar_id,
+                                            text=' '.join(
+                                                sys.argv[1:])).execute()
 
   if created_event['status'] != 'confirmed':
     logging.fatal('Could not create event: %s' % created_event['status'])

@@ -12,12 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load(
+    "@pypi//:requirements.bzl",
+    "data_requirement",
+    "dist_info_requirement",
+    "entry_point",
+)
 load("@subpar//:subpar.bzl", "par_binary")
+load("@rules_python//python:pip.bzl", "compile_pip_requirements")
 
-par_binary(
+compile_pip_requirements(
+    name = "requirements",
+    extra_args = ["--allow-unsafe"],
+    requirements_in = "requirements.in",
+    requirements_txt = "requirements_lock.txt",
+)
+
+py_binary(
     name = "gcal",
     srcs = ["gcal.py"],
-    python_version = "PY3",
     visibility = ["//visibility:public"],
-    deps = [],
+    deps = [
+        "@pypi_absl_py//:pkg",
+        "@pypi_google_api_python_client//:pkg",
+        "@pypi_google_auth_oauthlib//:pkg",
+        "@pypi_protobuf//:pkg",
+    ],
 )

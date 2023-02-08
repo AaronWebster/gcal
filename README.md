@@ -10,6 +10,13 @@ cd gcal
 bazel build -c opt :gcal.par
 ```
 
+### Update requirements.in
+
+```shell
+pipreqs --savepath=requirements.in src
+```
+
+
 ## INSTALL
 To install, copy the binary to somewhere in your path, e.g.
 
